@@ -1,29 +1,34 @@
-// styles/CarListScreenStyles.js
+// src/styles/CarListScreenStyles.js
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#ffffff',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
-        textAlign: 'center',
     },
     card: {
         marginVertical: 8,
         borderRadius: 8,
-        elevation: 3, // Shadow effect for Android
+        elevation: 3,
+        padding: 10,
     },
     cardContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    carInfo: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     cardText: {
-        marginLeft: 10,
+        marginLeft: 15,
     },
     carText: {
         fontSize: 18,
@@ -32,6 +37,29 @@ const styles = StyleSheet.create({
     yearText: {
         fontSize: 14,
         color: '#666',
+    },
+    mileageText: {
+        fontSize: 14,
+        color: '#666',
+    },
+    deleteButton: {
+        backgroundColor: 'red',
+        borderRadius: 30,
+        padding: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    addButton: {
+        backgroundColor: '#6200ee',
+        padding: 15,
+        borderRadius: 30,
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    addButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });
 
