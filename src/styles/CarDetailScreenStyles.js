@@ -11,24 +11,40 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
+        color: '#6200ee',
     },
-    record: {
-        padding: 10,
-        borderRadius: 5,
+    detailText: {
+        fontSize: 18,
         marginBottom: 10,
+        color: '#333',
     },
-    averageCost: {
+    buttonContainer: {
+        marginVertical: 10,
+    },
+    averageText: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '600',
         marginTop: 20,
+        marginBottom: 10,
+        color: '#6200ee',
     },
-    totalCost: {
-        fontSize: 18,
+    sectionHeader: {
+        fontSize: 20,
         fontWeight: 'bold',
-        marginTop: 10,
+        marginVertical: 15,
+        color: '#6200ee',
     },
     recordText: {
         fontSize: 16,
+        color: '#333',
+    },
+    recordContainer: {
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        marginVertical: 5,
     },
 });
 
