@@ -1,33 +1,33 @@
 // screens/CarDetailScreen.js
-import React, { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, TouchableOpacity } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, Button, Alert, FlatList, TouchableOpacity} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native'; // For refetching data when screen is focused
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 import styles from '../styles/CarDetailScreenStyles';
-import buttonStyles from '../styles/ButtonStyles';
 
 const CarDetailScreen = ({ route, navigation }) => {
-    const { car } = route.params;
+    const { car: initialCarData } = route.params;
+    const [car, setCar] = useState(initialCarData);
     const [fuelRecords, setFuelRecords] = useState([]);
     const [maintenanceEvents, setMaintenanceEvents] = useState([]);
+    const [fuelEvents, setFuelEvents] = useState(car.fuelRecords);
     const [averageMPG, setAverageMPG] = useState(null);
     const [averageFuelCost, setAverageFuelCost] = useState(null);
+    const [filter, setFilter] = useState('all'); // 'all', 'maintenance', 'fuel'
 
+    // Fetch and update the car data (e.g., mileage) when the screen is focused
     useFocusEffect(
         React.useCallback(() => {
-            const fetchRecords = async () => {
-                const storedFuelRecords = await AsyncStorage.getItem(`fuel_${car.id}`);
-                if (storedFuelRecords) {
-                    setFuelRecords(JSON.parse(storedFuelRecords));
-                }
-
-                const storedEvents = await AsyncStorage.getItem(`maintenance_${car.id}`);
-                if (storedEvents) {
-                    setMaintenanceEvents(JSON.parse(storedEvents));
+            const fetchUpdatedCarData = async () => {
+                const storedCars = await AsyncStorage.getItem('cars');
+                const carsArray = storedCars ? JSON.parse(storedCars) : [];
+                const updatedCar = carsArray.find(c => c.id === car.id);
+                if (updatedCar) {
+                    setCar(updatedCar); // Update the car data in state
                 }
             };
 
-            fetchRecords();
+            fetchUpdatedCarData();
         }, [car.id])
     );
 
@@ -111,9 +111,37 @@ const CarDetailScreen = ({ route, navigation }) => {
         }
     }, [fuelRecords]);
 
+    const combinedEvents = [
+        ...maintenanceEvents.map(event => ({ ...event, type: 'maintenance' })),
+        ...fuelEvents.map(event => ({ ...event, type: 'fuel' })),
+    ];
+
+    const filteredEvents = filter === 'all'
+        ? combinedEvents
+        : combinedEvents.filter(record => record.type === filter);
+
     const addFuelRecordHandler = () => {
         navigation.navigate('Record Fuel Fill-Up', { car });
     };
+
+    const addMaintenanceHandler = () => {
+        navigation.navigate('Add Maintenance Event', { car });
+    };
+
+    const renderEvent = ({ item }) => (
+        <View style={styles.eventCard}>
+            <Text>{item.fuelRecords}</Text>
+            <Text style={styles.eventType}>{item.type === 'maintenance' ? 'Maintenance Performed' : 'Fuel Added'}</Text>
+            <Text style={styles.eventDate}>Date: {item.date}</Text>
+            <Text>{item.type === 'maintenance' ? `Description: ${item.type}` : `Fuel: ${item.fuelAmount} gallons`}</Text>
+            {item.mileage && <Text>Mileage: {item.mileage}</Text>}
+            {item.costPerGallon && <Text>Cost Per Gallon: ${item.costPerGallon}</Text>}
+            <View style={styles.buttonContainer}>
+                <Button title="Edit" style={styles.buttonText} onPress={() => editEventHandler(item)} />
+                <Button title="Delete" style={styles.buttonText} onPress={() => deleteEventHandler(item.id)} color="red" />
+            </View>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
@@ -121,33 +149,55 @@ const CarDetailScreen = ({ route, navigation }) => {
             <Text>Make: {car.make}</Text>
             <Text>Model: {car.model}</Text>
             <Text>Year: {car.year}</Text>
+            <Text>Mileage: {car.mileage}</Text>
 
             <Text>Total Lifetime Maintenance Cost: ${totalLifetimeCost > 0 ? totalLifetimeCost.toFixed(2) : '$0.00'}</Text>
             <Text>Total Current Year Maintenance Cost: ${totalCurrentYearCost > 0 ? totalCurrentYearCost.toFixed(2) : '$0.00'}</Text>
-            <Text style={styles.averageCost}>Average Monthly Cost: ${averageMonthlyCost}</Text>
+            <Text>Average Monthly Cost: ${averageMonthlyCost}</Text>
             <Text>Average MPG: {averageMPG || 'N/A'}</Text>
             <Text>Average Fuel Cost: ${averageFuelCost}</Text>
 
             <Button title="Add Maintenance Event" style={styles.button} onPress={() => navigation.navigate('Add Maintenance Event', { car })} />
-            <Button title="Record Fuel Fill-Up" style={styles.button} onPress={addFuelRecordHandler} />
+            <Button title="Record Fuel Fill-Up" style={styles.button} onPress={() => navigation.navigate('Record Fuel Fill-Up', { car })} />
 
+            {/* Filter Buttons */}
+            <View style={styles.filterContainer}>
+                <TouchableOpacity style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]} onPress={() => setFilter('all')}>
+                    <Text style={styles.filterButtonText}>All Events</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.filterButton, filter === 'maintenance' && styles.filterButtonActive]} onPress={() => setFilter('maintenance')}>
+                    <Text style={styles.filterButtonText}>Maintenance</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.filterButton, filter === 'fuel' && styles.filterButtonActive]} onPress={() => setFilter('fuel')}>
+                    <Text style={styles.filterButtonText}>Fuel</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Event List */}
             <FlatList
-                data={maintenanceEvents}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item, index }) => (
-                    <View style={[styles.record, { backgroundColor: index % 2 === 0 ? '#f0f0f0' : '#ffffff' }]}>
-                        <Text style={styles.recordText}>{item.type}</Text>
-                        <Text style={styles.recordText}>Date: {item.date}</Text>
-                        <Text style={styles.recordText}>Cost: ${item.cost ? item.cost.toFixed(2) : '$0.00'}</Text>
-                        <Text style={styles.recordText}>Mileage: {item.mileage}</Text>
-                        <Text style={styles.recordText}>Notes: {item.note}</Text>
-                        <View style={styles.buttonContainer}>
-                            <Button title="Edit" style={buttonStyles.buttonText} onPress={() => editEventHandler(item)} />
-                            <Button title="Delete" style={buttonStyles.buttonText} onPress={() => deleteEventHandler(item.id)} color="red" />
-                        </View>
-                    </View>
-                )}
+                data={filteredEvents}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={renderEvent}
+                contentContainerStyle={styles.eventList}
             />
+
+            {/*<FlatList*/}
+            {/*    data={maintenanceEvents}*/}
+            {/*    keyExtractor={(item) => item.id}*/}
+            {/*    renderItem={({ item, index }) => (*/}
+            {/*        <View style={[styles.record, { backgroundColor: index % 2 === 0 ? '#f0f0f0' : '#ffffff' }]}>*/}
+            {/*            <Text style={styles.recordText}>{item.type}</Text>*/}
+            {/*            <Text style={styles.recordText}>Date: {item.date}</Text>*/}
+            {/*            <Text style={styles.recordText}>Cost: ${item.cost ? item.cost.toFixed(2) : '$0.00'}</Text>*/}
+            {/*            <Text style={styles.recordText}>Mileage: {item.mileage}</Text>*/}
+            {/*            <Text style={styles.recordText}>Notes: {item.note}</Text>*/}
+            {/*            <View style={styles.buttonContainer}>*/}
+            {/*                <Button title="Edit" style={buttonStyles.buttonText} onPress={() => editEventHandler(item)} />*/}
+            {/*                <Button title="Delete" style={buttonStyles.buttonText} onPress={() => deleteEventHandler(item.id)} color="red" />*/}
+            {/*            </View>*/}
+            {/*        </View>*/}
+            {/*    )}*/}
+            {/*/>*/}
         </View>
     );
 };

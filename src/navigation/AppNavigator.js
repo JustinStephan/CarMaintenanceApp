@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import CarListScreen from '../screens/CarListScreen';
 import CarDetailScreen from '../screens/CarDetailScreen';
 import AddMaintenanceEvent from '../screens/AddMaintenanceEvent';
-import RecordFuelScreen from '../screens/RecordFuelScreen';
+import AddFuelScreen from '../screens/AddFuelScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,7 +28,7 @@ const AppNavigator = () => {
             />
             <Stack.Screen
                 name="Record Fuel Fill-Up"
-                component={RecordFuelScreen}
+                component={AddFuelScreen}
                 options={{ title: 'Record Fuel Fill-Up' }}
             />
         </Stack.Navigator>
