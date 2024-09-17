@@ -3,7 +3,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import CarListScreen from '../screens/CarListScreen';
 import CarDetailScreen from '../screens/CarDetailScreen';
-import AddMaintenanceEvent from '../screens/AddMaintenanceEvent';
+import AddMaintenanceScreen from '../screens/AddMaintenanceScreen';
 import AddFuelScreen from '../screens/AddFuelScreen';
 
 const Stack = createStackNavigator();
@@ -23,7 +23,7 @@ const AppNavigator = () => {
             />
             <Stack.Screen
                 name="Add Maintenance Event"
-                component={AddMaintenanceEvent}
+                component={AddMaintenanceScreen}
                 options={{ title: 'Add Maintenance Event' }}
             />
             <Stack.Screen

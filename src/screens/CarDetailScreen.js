@@ -8,9 +8,8 @@ import styles from '../styles/CarDetailScreenStyles';
 const CarDetailScreen = ({ route, navigation }) => {
     const { car: initialCarData } = route.params;
     const [car, setCar] = useState(initialCarData);
-    const [fuelRecords, setFuelRecords] = useState([]);
-    const [maintenanceEvents, setMaintenanceEvents] = useState([]);
-    const [fuelEvents, setFuelEvents] = useState(car.fuelRecords);
+    const [fuelRecords, setFuelRecords] = useState(car.fuelRecords ? car.fuelRecords : []);
+    const [maintenanceRecords, setMaintenanceRecords] = useState(car.maintenanceRecords ? car.maintenanceRecords : []);
     const [averageMPG, setAverageMPG] = useState(null);
     const [averageFuelCost, setAverageFuelCost] = useState(null);
     const [filter, setFilter] = useState('all'); // 'all', 'maintenance', 'fuel'
@@ -30,11 +29,6 @@ const CarDetailScreen = ({ route, navigation }) => {
             fetchUpdatedCarData();
         }, [car.id])
     );
-
-    const addEventHandler = () => {
-        navigation.navigate('Add Maintenance Event', { car });
-    };
-
 
     const editEventHandler = (event) => {
         navigation.navigate('Add Maintenance Event', { car, event });
@@ -57,16 +51,17 @@ const CarDetailScreen = ({ route, navigation }) => {
         );
     };
 
+    //TODO i dont think this works anymore
     const handleDelete = async (id) => {
-        const updatedEvents = maintenanceEvents.filter(event => event.id !== id);
-        setMaintenanceEvents(updatedEvents);
+        const updatedEvents = maintenanceRecords.filter(event => event.id !== id);
+        setMaintenanceRecords(updatedEvents);
         await AsyncStorage.setItem(`maintenance_${car.id}`, JSON.stringify(updatedEvents));
     };
 
-    const totalLifetimeCost = maintenanceEvents.reduce((acc, event) => acc + (parseFloat(event.cost) || 0), 0);
+    const totalLifetimeCost = maintenanceRecords.reduce((acc, event) => acc + (parseFloat(event.cost) || 0), 0);
 
     const currentYear = new Date().getFullYear();
-    const totalCurrentYearCost = maintenanceEvents.reduce((acc, event) => {
+    const totalCurrentYearCost = maintenanceRecords.reduce((acc, event) => {
         const eventDate = new Date(event.date);
         if (eventDate.getFullYear() === currentYear) {
             return acc + (parseFloat(event.cost) || 0);
@@ -74,7 +69,7 @@ const CarDetailScreen = ({ route, navigation }) => {
         return acc;
     }, 0);
 
-    const validCosts = maintenanceEvents.map(event => parseFloat(event.cost)).filter(cost => cost > 0);
+    const validCosts = maintenanceRecords.map(event => parseFloat(event.cost)).filter(cost => cost > 0);
     const averageMonthlyCost = validCosts.length > 0
         ? (totalLifetimeCost / validCosts.length).toFixed(2)
         : '0.00';
@@ -111,22 +106,14 @@ const CarDetailScreen = ({ route, navigation }) => {
         }
     }, [fuelRecords]);
 
-    const combinedEvents = [
-        ...maintenanceEvents.map(event => ({ ...event, type: 'maintenance' })),
-        ...fuelEvents.map(event => ({ ...event, type: 'fuel' })),
+    const combinedRecords = [
+        ...maintenanceRecords.map(record => ({ ...record, type: 'maintenance' })),
+        ...fuelRecords.map(record => ({ ...record, type: 'fuel' })),
     ];
 
-    const filteredEvents = filter === 'all'
-        ? combinedEvents
-        : combinedEvents.filter(record => record.type === filter);
-
-    const addFuelRecordHandler = () => {
-        navigation.navigate('Record Fuel Fill-Up', { car });
-    };
-
-    const addMaintenanceHandler = () => {
-        navigation.navigate('Add Maintenance Event', { car });
-    };
+    const filteredRecords = filter === 'all'
+        ? combinedRecords
+        : combinedRecords.filter(record => record.type === filter);
 
     const renderEvent = ({ item }) => (
         <View style={styles.eventCard}>
@@ -175,14 +162,14 @@ const CarDetailScreen = ({ route, navigation }) => {
 
             {/* Event List */}
             <FlatList
-                data={filteredEvents}
+                data={filteredRecords}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={renderEvent}
                 contentContainerStyle={styles.eventList}
             />
 
             {/*<FlatList*/}
-            {/*    data={maintenanceEvents}*/}
+            {/*    data={maintenanceRecords}*/}
             {/*    keyExtractor={(item) => item.id}*/}
             {/*    renderItem={({ item, index }) => (*/}
             {/*        <View style={[styles.record, { backgroundColor: index % 2 === 0 ? '#f0f0f0' : '#ffffff' }]}>*/}

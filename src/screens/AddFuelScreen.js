@@ -3,10 +3,14 @@ import React, {useEffect, useState} from 'react';
 import { View, Text, TextInput, Button, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styles/RecordFuelScreenStyles';
-import DateInput from "../components/DateInput"; // Create a separate stylesheet for AddFuelScreen
+import DateInput from "../components/DateInput";
+import uuid from "react-native-uuid";
+import { validateMileage } from '../utils/MileageValidation.js';
+import {updateCarInStorage} from "../utils/UpdateCarDetails";
 
+//TODO Add edit record functionality
 const AddFuelScreen = ({ route, navigation }) => {
-    const { car: initialCar, event } = route.params;
+    const { car: initialCar, event: record } = route.params;
     const [car, setCar] = useState(initialCar);
     const [mileage, setMileage] = useState(event ? event.mileage.toString() : car.mileage ? car.mileage.toString() : '');
     const [fuelAmount, setFuelAmount] = useState('');
@@ -14,6 +18,7 @@ const AddFuelScreen = ({ route, navigation }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString()); // Default to today's date
 
     useEffect(() => {
+        //TODO is this not needed?
         // Fetch the car from AsyncStorage if needed (already passed in this example)
         const fetchCar = async () => {
             const storedCars = await AsyncStorage.getItem('cars');
@@ -36,12 +41,12 @@ const AddFuelScreen = ({ route, navigation }) => {
         const costPerGallon = parseFloat(costPerGallon);
 
 
-        if (!newMileage || newMileage < car.mileage) {
-            Alert.alert("Invalid Mileage", "The mileage must be greater than or equal to the current mileage.");
+        if (!validateMileage(newMileage, car.mileage)) {
             return;
         }
 
         const newFuelRecord = {
+            id: record ? record.id : uuid.v4(), // Use existing id if editing
             mileage: newMileage,
             fuelAmount: fuelAmount,
             costPerGallon: costPerGallon || null,
@@ -56,15 +61,7 @@ const AddFuelScreen = ({ route, navigation }) => {
 
         updatedCar.mileage = newMileage;
 
-        setCar(updatedCar); // Update state with the new car object
-
-        // Retrieve the existing list of cars from AsyncStorage
-        const storedCars = await AsyncStorage.getItem('cars');
-        const carsArray = storedCars ? JSON.parse(storedCars) : [];
-
-        // Update the car in the array and save back to AsyncStorage
-        const updatedCarsArray = carsArray.map(c => (c.id === car.id ? updatedCar : c));
-        await AsyncStorage.setItem('cars', JSON.stringify(updatedCarsArray));
+        await updateCarInStorage(updatedCar); // Update state with the new car object
 
         // Reset form inputs
         setMileage('');
@@ -80,8 +77,7 @@ const AddFuelScreen = ({ route, navigation }) => {
         const costPerGallonValue = parseFloat(costPerGallon);
 
 
-        if (!mileageValue || mileageValue < currentCar.mileage) {
-            Alert.alert("Invalid Mileage", "The mileage must be greater than or equal to the current mileage.");
+        if (validateMileage(mileageValue, car.mileage)) {
             return;
         }
 
@@ -91,16 +87,16 @@ const AddFuelScreen = ({ route, navigation }) => {
             costPerGallon: costPerGallonValue || null,
             date: selectedDate
         };
-
-        // Store the fuel recor
-        const fuelRecordsArray = storedFuelRecords ? JSON.parse(storedFuelRecords) : [];
-        fuelRecordsArray.push(newFuelRecord);
-        await AsyncStorage.setItem(`fuel_${car.id}`, JSON.stringify(fuelRecordsArray));
-
-        // Update car mileage
-        car.mileage = mileageValue;
-        const updatedCarsArray = car.map(c => c.id === car.id ? currentCar : c);
-        await AsyncStorage.setItem('cars', JSON.stringify(updatedCarsArray));
+        //
+        // // Store the fuel record
+        // const fuelRecordsArray = storedFuelRecords ? JSON.parse(storedFuelRecords) : [];
+        // fuelRecordsArray.push(newFuelRecord);
+        // await AsyncStorage.setItem(`fuel_${car.id}`, JSON.stringify(fuelRecordsArray));
+        //
+        // // Update car mileage
+        // car.mileage = mileageValue;
+        // const updatedCarsArray = car.map(c => c.id === car.id ? currentCar : c);
+        // await AsyncStorage.setItem('cars', JSON.stringify(updatedCarsArray));
 
         navigation.goBack();
     };
